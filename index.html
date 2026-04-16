@@ -178,6 +178,33 @@ select.t-select.filled{background-color:var(--green-pale);border-color:var(--gre
 .vs-section ul{padding-left:18px;}
 .vs-section li,.vs-section p{font-size:13px;line-height:1.75;color:var(--text);}
 
+.bericht-btn{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;margin-top:10px;
+  padding:12px 14px;
+  background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;
+  color:#065f46;font-size:13px;font-weight:500;
+  font-family:'DM Sans',sans-serif;cursor:pointer;
+}
+.bericht-btn:active{background:#d1fae5;}
+.bericht-btn.open .vb-icon{transform:rotate(180deg);}
+.bericht-body{
+  display:none;margin-top:6px;
+  border:1px solid #bbf7d0;border-radius:10px;overflow:hidden;
+  background:var(--white);
+}
+.bericht-body.open{display:block;}
+.bericht-content{padding:14px;}
+.bericht-empty{padding:14px;color:var(--muted);font-size:13px;font-style:italic;text-align:center;}
+.bericht-text{font-size:13px;line-height:1.7;color:var(--text);white-space:pre-wrap;}
+.bericht-meta{font-size:11px;color:var(--muted);margin-top:8px;}
+.bericht-edit-btn{
+  display:block;width:100%;padding:12px;
+  background:var(--green);color:#fff;border:none;
+  font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;
+}
+.past-card{opacity:.9;}
+.past-card .slot-row select{color:var(--muted);}
 .vs-use-btn{
   display:block;width:100%;padding:14px;
   background:var(--green);color:#fff;border:none;
@@ -204,14 +231,23 @@ select.t-select.filled{background-color:var(--green-pale);border-color:var(--gre
 .toast.show{display:flex;}
 
 /* ── OVERVIEW ── */
-.ov-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r);border:1px solid var(--border);}
-.ov-table{width:100%;border-collapse:collapse;font-size:12px;background:var(--white);}
-.ov-table thead{background:var(--green);color:#fff;position:sticky;top:0;}
-.ov-table th{padding:10px 8px;text-align:left;font-weight:500;font-size:11px;white-space:nowrap;}
-.ov-table td{padding:9px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
-.ov-table tr:last-child td{border-bottom:none;}
-.ov-month td{background:var(--green);color:#fff;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;padding:5px 10px;}
-.ov-next td{background:var(--green-pale);}
+.ov-month-label{
+  background:var(--green);color:#fff;
+  font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.07em;
+  padding:6px 14px;border-radius:var(--r);margin:14px 0 8px;
+}
+.ov-card{
+  background:var(--white);border:1px solid var(--border);border-radius:var(--r);
+  padding:12px 14px;margin-bottom:8px;
+}
+.ov-card.ov-next{border-color:var(--green);border-width:2px;background:var(--green-pale);}
+.ov-date{font-size:13px;font-weight:600;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.ov-next-badge{background:var(--green);color:#fff;font-size:10px;font-weight:500;padding:2px 7px;border-radius:100px;}
+.ov-groups{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.ov-group{background:var(--bg);border-radius:8px;padding:8px 10px;}
+.ov-group-head{display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+.ov-group-name{font-size:11px;font-weight:500;color:var(--muted);}
+.ov-group-time{font-size:10px;color:var(--muted);}
 .pill{display:inline-block;background:var(--green-light);color:var(--green);border-radius:100px;padding:2px 7px;font-size:11px;font-weight:500;margin:1px;white-space:nowrap;}
 .pill-red{background:#fde8e8;color:var(--red);}
 .empty{color:var(--muted);font-style:italic;font-size:11px;}
@@ -369,7 +405,7 @@ input.add-in:focus{outline:none;border-color:var(--green);}
     <div id="row-cd"></div>
     <div class="time-label" style="margin-top:4px;">17:30 Uhr — Gruppen A & B</div>
     <div id="row-ab"></div>
-    <div class="save-row">
+    <div class="save-row" id="save-row">
       <button class="btn-primary" id="save-btn" onclick="savePlan()">Speichern</button>
       <button class="btn-ghost" onclick="clearPlan()">Leeren</button>
       <span class="toast" id="save-toast">✓ Gespeichert</span>
@@ -378,16 +414,7 @@ input.add-in:focus{outline:none;border-color:var(--green);}
 
   <!-- ÜBERSICHT -->
   <div id="tab-overview" class="panel">
-    <div class="ov-wrap">
-      <table class="ov-table">
-        <thead><tr>
-          <th>Datum</th>
-          <th>C (16h)</th><th>D (16h)</th>
-          <th>A (17:30)</th><th>B (17:30)</th>
-        </tr></thead>
-        <tbody id="ov-body"></tbody>
-      </table>
-    </div>
+    <div id="ov-cards"></div>
   </div>
 
   <!-- BERICHTE -->
@@ -419,6 +446,7 @@ input.add-in:focus{outline:none;border-color:var(--green);}
         <button class="gf-btn" data-g="A" onclick="setAnwG('A')">A – Eagle</button>
         <button class="gf-btn" data-g="B" onclick="setAnwG('B')">B – Birdie 2</button>
       </div>
+      <div class="anw-filters" id="anw-month-filters" style="margin-top:-4px;"></div>
       <div class="anw-legend">
         <span><span class="leg-dot" style="background:#d1fae5;border:1px solid #6ee7b7;"></span>Anwesend</span>
         <span><span class="leg-dot" style="background:#fef3c7;border:1px solid #fcd34d;"></span>Entschuldigt</span>
@@ -552,12 +580,23 @@ function trOpts(sel=''){
 function changeWeek(d){planOffset+=d;renderPlan();}
 async function renderPlan(){
   const d=wed(planOffset),key=iso(d);
+  const today=new Date();today.setHours(0,0,0,0);
+  const isPast=d<today;
   document.getElementById('plan-date').textContent=fmtLong(d);
-  document.getElementById('plan-sub').textContent=planOffset===0?'Nächster Mittwoch':'';
+  document.getElementById('plan-sub').textContent=planOffset===0?'Nächster Mittwoch':(isPast?'Vergangenes Training':'');
   load(true);
-  try{const rows=await sb('training_planung').get(`datum=eq.${key}`);planData={};rows.forEach(r=>{planData[r.gruppe]=r;});}
+  let repData={};
+  try{
+    const rows=await sb('training_planung').get(`datum=eq.${key}`);
+    planData={};rows.forEach(r=>{planData[r.gruppe]=r;});
+    if(isPast){
+      const repRows=await sb('training_berichte').get(`datum=eq.${key}`);
+      repRows.forEach(r=>{repData[r.gruppe]=r;});
+    }
+  }
   catch(e){console.error(e);}
   load(false);
+  document.getElementById('save-row').style.display=isPast?'none':'flex';
   ['cd','ab'].forEach(pair=>{
     const grps=pair==='cd'?['C','D']:['A','B'];
     const cont=document.getElementById(`row-${pair}`);
@@ -565,23 +604,31 @@ async function renderPlan(){
     grps.forEach(gid=>{
       const g=GROUPS.find(x=>x.id===gid),data=planData[gid]||{};
       const t1=data.trainer1||'',t2=data.trainer2||'',ab=data.abgesagt||false;
+      const rep=repData[gid]||null;
       const card=document.createElement('div');
-      card.className='group-card'+(ab?' abgesagt':'');
+      card.className='group-card'+(ab?' abgesagt':'')+(isPast?' past-card':'');
+
+      // Trainer dropdowns — readonly if past
+      const selDisabled=ab||isPast;
+      const selStyle=isPast?'pointer-events:none;':'';
+
       card.innerHTML=`
         <div class="gc-head">
           <div class="gc-left">
             <div class="gc-badge badge-${gid}">${gid}</div>
             <div><div class="gc-name">Gruppe ${gid} — ${GNAME[gid]}</div><div class="gc-time">${g.time} Uhr</div></div>
           </div>
+          ${isPast?'<span style="font-size:11px;color:var(--muted);background:var(--bg);padding:3px 8px;border-radius:100px;border:1px solid var(--border);">Vergangen</span>':''}
         </div>
         <div class="slot-row"><span class="slot-label">Trainer 1</span>
-          <select class="t-select${t1?' filled':''}" id="s${gid}1" onchange="this.classList.toggle('filled',!!this.value)"${ab?' disabled':''}>${trOpts(t1)}</select>
+          <select class="t-select${t1?' filled':''}" id="s${gid}1" style="${selStyle}"${selDisabled?' disabled':''}>${trOpts(t1)}</select>
         </div>
         <div class="slot-row"><span class="slot-label">Trainer 2</span>
-          <select class="t-select${t2?' filled':''}" id="s${gid}2" onchange="this.classList.toggle('filled',!!this.value)"${ab?' disabled':''}>
+          <select class="t-select${t2?' filled':''}" id="s${gid}2" style="${selStyle}"${selDisabled?' disabled':''}>
             <option value="">— optional —</option>${trainers.map(t=>`<option value="${t.name}"${t.name===t2?' selected':''}>${t.name}</option>`).join('')}
           </select>
         </div>
+        ${!isPast?`
         <div class="abgesagt-row">
           <label><input type="checkbox" id="chk${gid}"${ab?' checked':''} onchange="toggleAbgesagt('${gid}',this)"><span style="color:${ab?'var(--red)':'var(--muted)'}">Training fällt aus</span></label>
         </div>
@@ -589,6 +636,12 @@ async function renderPlan(){
           <span>✦ Trainingsvorschlag</span><span class="vb-icon">▼</span>
         </button>
         <div class="vorschlag-body" id="vacc${gid}"></div>
+        `:`
+        <button class="bericht-btn" id="bbtn${gid}" onclick="toggleBericht('${gid}','${key}')">
+          <span>📋 Trainingsbericht</span><span class="vb-icon">▼</span>
+        </button>
+        <div class="bericht-body" id="bacc${gid}" data-bericht="${rep?.bericht?encodeURIComponent(rep.bericht):''}"></div>
+        `}
       `;
       cont.appendChild(card);
     });
@@ -600,6 +653,38 @@ function toggleAbgesagt(gid,cb){
   card.classList.toggle('abgesagt',cb.checked);
   cb.nextElementSibling.style.color=cb.checked?'var(--red)':'var(--muted)';
   ['s'+gid+'1','s'+gid+'2'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=cb.checked;});
+}
+
+function toggleBericht(gid, key){
+  const acc=document.getElementById('bacc'+gid);
+  const btn=document.getElementById('bbtn'+gid);
+  const wasOpen=acc.classList.contains('open');
+  document.querySelectorAll('.bericht-body').forEach(a=>a.classList.remove('open'));
+  document.querySelectorAll('.bericht-btn').forEach(b=>b.classList.remove('open'));
+  if(!wasOpen){
+    acc.classList.add('open');btn.classList.add('open');
+    const encoded=acc.dataset.bericht;
+    const bericht=encoded?decodeURIComponent(encoded):'';
+    if(bericht){
+      acc.innerHTML=`
+        <div class="bericht-content">
+          <div class="bericht-text">${bericht.replace(/</g,'&lt;')}</div>
+          <div class="bericht-meta">Eintrag vorhanden</div>
+        </div>
+        <button class="bericht-edit-btn" onclick="goToBericht('${gid}')">✏️ Bericht bearbeiten</button>`;
+    }else{
+      acc.innerHTML=`
+        <div class="bericht-empty">Noch kein Bericht eingetragen</div>
+        <button class="bericht-edit-btn" onclick="goToBericht('${gid}')">✏️ Bericht jetzt eintragen</button>`;
+    }
+    setTimeout(()=>acc.scrollIntoView({behavior:'smooth',block:'nearest'}),60);
+  }
+}
+
+function goToBericht(gid){
+  // Navigate to reports tab at the correct week
+  repOffset=planOffset;
+  switchTab('reports');
 }
 
 async function savePlan(){
@@ -701,16 +786,37 @@ async function renderOverview(){
   try{rows=await sb('training_planung').get(`datum=gte.${keys[0]}&datum=lte.${keys[keys.length-1]}&order=datum`);}
   catch(e){}load(false);
   const byDate={};rows.forEach(r=>{if(!byDate[r.datum])byDate[r.datum]={};byDate[r.datum][r.gruppe]=r;});
-  const tbody=document.getElementById('ov-body');tbody.innerHTML='';
+  const cont=document.getElementById('ov-cards');cont.innerHTML='';
   let lastMon=null;const nextKey=iso(wed(0));
+  const GRP=[{id:'C',time:'16:00'},{id:'D',time:'16:00'},{id:'A',time:'17:30'},{id:'B',time:'17:30'}];
   dates.forEach(d=>{
     const key=iso(d);const data=byDate[key]||{};const isNext=key===nextKey;
     const mon=d.toLocaleDateString('de-AT',{month:'long',year:'numeric'});
-    if(mon!==lastMon){lastMon=mon;const sep=document.createElement('tr');sep.className='ov-month';sep.innerHTML=`<td colspan="5">${mon}</td>`;tbody.appendChild(sep);}
-    const tr=document.createElement('tr');if(isNext)tr.className='ov-next';
-    const cell=g=>{const r=data[g];if(r?.abgesagt)return'<span class="pill pill-red">⊘ Abgesagt</span>';const ns=[r?.trainer1,r?.trainer2].filter(Boolean);return ns.length?ns.map(n=>`<span class="pill">${n.split(' ')[0]}</span>`).join(''):'<span class="empty">offen</span>';};
-    tr.innerHTML=`<td class="date-col">${d.getDate()}.${d.getMonth()+1}.${isNext?'<br><b style="color:var(--green)">→ Nächste</b>':''}</td><td>${cell('C')}</td><td>${cell('D')}</td><td>${cell('A')}</td><td>${cell('B')}</td>`;
-    tbody.appendChild(tr);
+    if(mon!==lastMon){
+      lastMon=mon;
+      const lbl=document.createElement('div');lbl.className='ov-month-label';lbl.textContent=mon;
+      cont.appendChild(lbl);
+    }
+    const card=document.createElement('div');
+    card.className='ov-card'+(isNext?' ov-next':'');
+    const dateStr=d.toLocaleDateString('de-AT',{weekday:'short',day:'2-digit',month:'2-digit'});
+    const groups=GRP.map(g=>{
+      const r=data[g.id];
+      let content;
+      if(r?.abgesagt){content='<span class="pill pill-red" style="font-size:11px;">⊘ Abgesagt</span>';}
+      else{const ns=[r?.trainer1,r?.trainer2].filter(Boolean);content=ns.length?ns.map(n=>`<span class="pill" style="font-size:11px;">${n.split(' ')[0]}</span>`).join(''):'<span class="empty">offen</span>';}
+      return `<div class="ov-group">
+        <div class="ov-group-head">
+          <div class="gc-badge badge-${g.id}" style="width:22px;height:22px;font-size:11px;border-radius:6px;">${g.id}</div>
+          <span class="ov-group-time">${g.time}</span>
+        </div>
+        <div>${content}</div>
+      </div>`;
+    }).join('');
+    card.innerHTML=`
+      <div class="ov-date">${dateStr}${isNext?'<span class="ov-next-badge">→ Nächste</span>':''}</div>
+      <div class="ov-groups">${groups}</div>`;
+    cont.appendChild(card);
   });
 }
 
@@ -796,9 +902,14 @@ async function removeKind(id,name){
 
 // ── ANWESENHEIT ──
 function setAnwG(g){
-  anwGruppe=g;
+  anwGruppe=g;anwMonth=null;
   document.querySelectorAll('.gf-btn').forEach(b=>b.classList.toggle('active',b.dataset.g===g));
   renderAnwesenheit();
+}
+function setAnwMonth(m){
+  anwMonth=m;
+  document.querySelectorAll('.anw-mf-btn').forEach(b=>b.classList.toggle('active',b.dataset.m===String(m)));
+  buildAnwTable();
 }
 async function renderAnwesenheit(){
   load(true);
@@ -812,11 +923,26 @@ async function renderAnwesenheit(){
     anwData={};anwKids.forEach(k=>{anwData[k.id]={};});
     rows.forEach(r=>{if(anwData[r.kind_id])anwData[r.kind_id][r.datum]=r.status;});
   }catch(e){console.error(e);}
-  load(false);buildAnwTable();
+  load(false);buildMonthFilters();buildAnwTable();
+}
+function buildMonthFilters(){
+  const nextWed=iso(wed(0));
+  const vis=anwDates.filter(d=>iso(d)<=nextWed);
+  const months=[...new Set(vis.map(d=>d.getMonth()))];
+  const cont=document.getElementById('anw-month-filters');
+  if(!cont)return;
+  if(months.length<=1){cont.innerHTML='';return;}
+  // Set default to current month
+  if(anwMonth===null){const now=new Date();anwMonth=now.getMonth();}
+  cont.innerHTML=months.map(m=>{
+    const label=new Date(2026,m,1).toLocaleDateString('de-AT',{month:'short'});
+    return`<button class="gf-btn anw-mf-btn${m===anwMonth?' active':''}" data-m="${m}" onclick="setAnwMonth(${m})" style="font-size:12px;padding:0 10px;height:32px;">${label}</button>`;
+  }).join('');
 }
 function buildAnwTable(){
   const nextWed=iso(wed(0));
-  const vis=anwDates.filter(d=>iso(d)<=nextWed);
+  let vis=anwDates.filter(d=>iso(d)<=nextWed);
+  if(anwMonth!==null) vis=vis.filter(d=>d.getMonth()===anwMonth);
   const SYM={anwesend:'✓',entschuldigt:'E',unentschuldigt:'U'};
   const CLS={anwesend:'anw-a',entschuldigt:'anw-e',unentschuldigt:'anw-u'};
   let h=`<table class="anw-table"><thead><tr><th class="name-th">Name</th>`;
