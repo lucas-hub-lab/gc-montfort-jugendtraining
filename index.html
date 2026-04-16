@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>GC Montfort — Jugendtraining</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green: #2D5016;
+  --green-mid: #3d6b20;
+  --green-light: #e8f0df;
+  --green-pale: #f4f8ee;
+  --gold: #b8860b;
+  --gold-light: #fdf6e3;
+  --text: #1a1a1a;
+  --muted: #6b7280;
+  --border: #dde5d0;
+  --bg: #f9faf7;
+  --white: #ffffff;
+  --red: #c0392b;
+  --red-light: #fdf0ee;
+  --r: 12px;
+  --nav-h: 60px;
+  --header-h: 52px;
+  --touch: 48px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+
+/* ── HEADER ── */
+header{
+  background:var(--green);color:#fff;
+  height:var(--header-h);
+  display:flex;align-items:center;padding:0 16px;
+  flex-shrink:0;
+  position:relative;z-index:50;
+}
+.h-logo{font-size:22px;margin-right:10px;}
+.h-title{font-size:16px;font-weight:600;letter-spacing:-0.01em;}
+.h-sub{font-size:11px;opacity:.65;margin-top:1px;}
+
+/* ── SCROLL AREA ── */
+#scroll-area{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:calc(var(--nav-h) + 12px);
+}
+
+/* ── BOTTOM NAV ── */
+nav{
+  position:fixed;bottom:0;left:0;right:0;
+  height:var(--nav-h);
+  background:var(--white);
+  border-top:1px solid var(--border);
+  display:flex;
+  z-index:100;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.nav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;border:none;background:none;cursor:pointer;
+  color:var(--muted);font-size:10px;font-family:'DM Sans',sans-serif;
+  transition:color .15s;
+  padding:6px 2px;
+}
+.nav-btn.active{color:var(--green);}
+.nav-btn svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+.nav-btn.active svg{stroke-width:2.2;}
+
+/* ── PANELS ── */
+.panel{display:none;padding:12px 14px;}
+.panel.active{display:block;}
+
+/* ── WEEK BAR ── */
+.week-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--white);border:1px solid var(--border);border-radius:var(--r);
+  padding:12px 14px;margin-bottom:14px;
+}
+.week-date{font-size:14px;font-weight:500;line-height:1.3;}
+.week-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.week-nav{display:flex;gap:6px;}
+.wbtn{
+  width:var(--touch);height:var(--touch);
+  background:var(--bg);border:1px solid var(--border);border-radius:10px;
+  cursor:pointer;font-size:20px;color:var(--muted);
+  display:flex;align-items:center;justify-content:center;
+}
+.wbtn:active{background:var(--green-pale);}
+
+/* ── GROUP CARD ── */
+.time-label{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 2px 8px;}
+.group-card{
+  background:var(--white);border:1px solid var(--border);border-radius:var(--r);
+  padding:14px;margin-bottom:10px;
+}
+.group-card.abgesagt{background:var(--red-light);border-color:#f5c6c2;}
+.gc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.gc-left{display:flex;align-items:center;gap:10px;}
+.gc-badge{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:600;}
+.badge-A{background:#dbeafe;color:#1e40af;}
+.badge-B{background:#d1fae5;color:#065f46;}
+.badge-C{background:#fef3c7;color:#92400e;}
+.badge-D{background:#fce7f3;color:#9d174d;}
+.gc-name{font-size:15px;font-weight:500;}
+.gc-time{font-size:12px;color:var(--muted);}
+
+.slot-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.slot-label{font-size:12px;color:var(--muted);min-width:54px;}
+select.t-select{
+  flex:1;height:var(--touch);
+  padding:0 36px 0 12px;
+  border:1px solid var(--border);border-radius:10px;
+  font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);
+  background:var(--bg);
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;
+}
+select.t-select:focus{outline:none;border-color:var(--green);}
+select.t-select.filled{background-color:var(--green-pale);border-color:var(--green);color:var(--green);font-weight:500;}
+
+.abgesagt-row{
+  display:flex;align-items:center;gap:10px;
+  margin-top:10px;padding-top:10px;border-top:1px solid var(--border);
+}
+.abgesagt-row label{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;color:var(--muted);}
+.abgesagt-row input[type=checkbox]{width:20px;height:20px;accent-color:var(--red);cursor:pointer;}
+
+/* ── VORSCHLAG ACCORDION ── */
+.vorschlag-btn{
+  display:flex;align-items:center;justify-content:space-between;
+  width:100%;margin-top:10px;
+  padding:12px 14px;
+  background:var(--gold-light);border:1px solid #e8d5a0;border-radius:10px;
+  color:#92400e;font-size:13px;font-weight:500;
+  font-family:'DM Sans',sans-serif;cursor:pointer;
+}
+.vorschlag-btn:active{background:#faeec0;}
+.vb-icon{font-size:16px;transition:transform .25s;}
+.vorschlag-btn.open .vb-icon{transform:rotate(180deg);}
+
+.vorschlag-body{
+  display:none;
+  margin-top:6px;border:1px solid #e8d5a0;border-radius:10px;
+  overflow:hidden;
+}
+.vorschlag-body.open{display:block;}
+
+.va-nav{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;background:var(--green-pale);
+  border-bottom:1px solid var(--border);
+}
+.va-nav-btn{
+  background:var(--white);border:1px solid var(--border);border-radius:8px;
+  font-size:18px;color:var(--green);cursor:pointer;
+  width:var(--touch);height:var(--touch);
+  display:flex;align-items:center;justify-content:center;
+}
+.va-nav-btn:active{background:var(--green-light);}
+.va-label{font-size:12px;color:var(--muted);}
+
+.vs-section{padding:12px 14px;border-bottom:1px solid var(--border);}
+.vs-section:last-of-type{border-bottom:none;}
+.vs-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;}
+.vs-section.warm{background:#fffbeb;}.vs-section.warm .vs-title{color:#b45309;}
+.vs-section.tech{background:var(--green-pale);}.vs-section.tech .vs-title{color:var(--green);}
+.vs-section.game{background:#f5f3ff;}.vs-section.game .vs-title{color:#6d28d9;}
+.vs-section.end{background:var(--bg);}.vs-section.end .vs-title{color:#475569;}
+.vs-section.mat{background:var(--gold-light);}.vs-section.mat .vs-title{color:#92400e;}
+.vs-section.tip{background:#f0fdf4;}.vs-section.tip .vs-title{color:var(--green);}
+.vs-section ul{padding-left:18px;}
+.vs-section li,.vs-section p{font-size:13px;line-height:1.75;color:var(--text);}
+
+.vs-use-btn{
+  display:block;width:100%;padding:14px;
+  background:var(--green);color:#fff;border:none;
+  font-size:14px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;
+}
+.vs-use-btn:active{background:var(--green-mid);}
+
+/* ── SAVE ROW ── */
+.save-row{display:flex;gap:8px;margin-top:14px;}
+.btn-primary{
+  flex:1;height:var(--touch);
+  background:var(--green);color:#fff;border:none;border-radius:10px;
+  font-size:14px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;
+}
+.btn-primary:active{background:var(--green-mid);}
+.btn-primary:disabled{opacity:.5;}
+.btn-ghost{
+  height:var(--touch);padding:0 16px;
+  background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:10px;
+  font-size:14px;font-family:'DM Sans',sans-serif;cursor:pointer;
+}
+.btn-ghost:active{border-color:var(--red);color:var(--red);}
+.toast{font-size:13px;color:var(--green);display:none;align-items:center;}
+.toast.show{display:flex;}
+
+/* ── OVERVIEW ── */
+.ov-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r);border:1px solid var(--border);}
+.ov-table{width:100%;border-collapse:collapse;font-size:12px;background:var(--white);}
+.ov-table thead{background:var(--green);color:#fff;position:sticky;top:0;}
+.ov-table th{padding:10px 8px;text-align:left;font-weight:500;font-size:11px;white-space:nowrap;}
+.ov-table td{padding:9px 8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.ov-table tr:last-child td{border-bottom:none;}
+.ov-month td{background:var(--green);color:#fff;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.06em;padding:5px 10px;}
+.ov-next td{background:var(--green-pale);}
+.pill{display:inline-block;background:var(--green-light);color:var(--green);border-radius:100px;padding:2px 7px;font-size:11px;font-weight:500;margin:1px;white-space:nowrap;}
+.pill-red{background:#fde8e8;color:var(--red);}
+.empty{color:var(--muted);font-style:italic;font-size:11px;}
+.date-col{font-size:11px;color:var(--muted);white-space:nowrap;}
+
+/* ── REPORTS ── */
+.report-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;}
+.rc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.rc-left{display:flex;align-items:center;gap:10px;}
+.rc-saved{font-size:12px;color:var(--green);display:none;}
+.rc-saved.show{display:block;}
+.rc-trainer{font-size:12px;color:var(--muted);margin-top:2px;}
+textarea.rtxt{
+  width:100%;min-height:90px;padding:12px;
+  border:1px solid var(--border);border-radius:10px;
+  font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);
+  background:var(--bg);resize:vertical;line-height:1.55;
+}
+textarea.rtxt:focus{outline:none;border-color:var(--green);}
+.rc-foot{display:flex;justify-content:flex-end;margin-top:8px;}
+.btn-sm{height:40px;padding:0 18px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;}
+
+/* ── KINDER TABS ── */
+.sub-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:14px;}
+.sub-tab{
+  flex:1;height:44px;border:none;background:none;cursor:pointer;
+  font-size:13px;font-family:'DM Sans',sans-serif;color:var(--muted);
+  border-bottom:2px solid transparent;margin-bottom:-1px;
+}
+.sub-tab.active{color:var(--green);border-bottom-color:var(--green);font-weight:500;}
+
+/* ── KINDER TABLE ── */
+.kinder-block{margin-bottom:16px;}
+.kinder-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.kinder-info{font-size:13px;font-weight:500;}
+.kinder-count{font-size:12px;color:var(--muted);}
+.k-table{width:100%;border-collapse:collapse;font-size:13px;background:var(--white);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;}
+.k-table thead{background:var(--green-light);}
+.k-table th{padding:9px 10px;text-align:left;font-size:11px;font-weight:500;color:var(--green);}
+.k-table td{padding:10px 10px;border-bottom:1px solid var(--border);}
+.k-table tr:last-child td{border-bottom:none;}
+.k-del{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;}
+
+/* ── ANWESENHEIT ── */
+.anw-filters{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.gf-btn{height:36px;padding:0 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--muted);font-size:13px;font-family:'DM Sans',sans-serif;cursor:pointer;}
+.gf-btn.active{background:var(--green);color:#fff;border-color:var(--green);font-weight:500;}
+.anw-legend{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
+.anw-legend span{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--muted);}
+.leg-dot{width:14px;height:14px;border-radius:3px;flex-shrink:0;}
+.anw-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:var(--r);border:1px solid var(--border);}
+.anw-table{border-collapse:collapse;font-size:12px;background:var(--white);}
+.anw-table th{padding:6px 4px;text-align:center;font-size:10px;font-weight:500;color:var(--muted);border-bottom:2px solid var(--border);min-width:34px;}
+.anw-table th.name-th{text-align:left;padding-left:10px;min-width:130px;position:sticky;left:0;background:var(--white);z-index:2;border-right:1px solid var(--border);}
+.anw-table td{padding:3px 2px;border-bottom:1px solid var(--border);text-align:center;}
+.anw-table td.name-td{text-align:left;padding:8px 10px;font-size:12px;font-weight:500;white-space:nowrap;position:sticky;left:0;background:var(--white);z-index:1;border-right:1px solid var(--border);}
+.anw-table tr:nth-child(even) td.name-td{background:var(--bg);}
+.anw-table tr:nth-child(even) td{background:var(--bg);}
+.anw-table tr:last-child td{border-bottom:none;}
+.anw-cell{
+  width:32px;height:32px;border-radius:4px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:12px;font-weight:600;
+  border:1px solid transparent;user-select:none;margin:1px auto;
+}
+.anw-none{background:var(--bg);border-color:var(--border);color:transparent;}
+.anw-a{background:#d1fae5;border-color:#6ee7b7;color:#065f46;}
+.anw-e{background:#fef3c7;border-color:#fcd34d;color:#92400e;}
+.anw-u{background:#fee2e2;border-color:#fca5a5;color:#991b1b;}
+.stat-td{font-size:11px;font-weight:600;padding:4px 6px !important;border-left:1px solid var(--border);}
+
+/* ── SETTINGS ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:12px;}
+.card-title{font-size:14px;font-weight:500;margin-bottom:14px;}
+.tr-row{display:flex;align-items:center;justify-content:space-between;padding:11px 12px;background:var(--bg);border-radius:8px;margin-bottom:6px;}
+.tr-name{font-size:14px;}
+.tr-del{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0 4px;min-width:var(--touch);min-height:var(--touch);display:flex;align-items:center;justify-content:center;}
+.add-row{display:flex;gap:8px;margin-top:8px;}
+input.add-in{
+  flex:1;height:var(--touch);padding:0 12px;
+  border:1px solid var(--border);border-radius:10px;
+  font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg);
+}
+input.add-in:focus{outline:none;border-color:var(--green);}
+
+/* ── DIALOG ── */
+.dialog-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;align-items:flex-end;justify-content:center;}
+.dialog-bg.open{display:flex;}
+.dialog{
+  background:var(--white);border-radius:20px 20px 0 0;
+  padding:20px 16px calc(20px + env(safe-area-inset-bottom));
+  width:100%;max-width:480px;
+}
+.dialog-title{font-size:16px;font-weight:600;margin-bottom:16px;}
+.dialog select,.dialog input{
+  width:100%;height:var(--touch);padding:0 12px;margin-bottom:10px;
+  border:1px solid var(--border);border-radius:10px;
+  font-size:14px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg);
+  appearance:none;
+}
+.dialog select{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b7280' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;
+}
+.dialog-btns{display:flex;gap:8px;margin-top:4px;}
+.dialog-btns button{flex:1;height:var(--touch);border-radius:10px;font-size:14px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;}
+.dialog-cancel{background:var(--bg);border:1px solid var(--border) !important;color:var(--muted);}
+.dialog-ok{background:var(--green);color:#fff;}
+
+/* ── LOADING ── */
+#loading{display:none;position:fixed;inset:0;background:rgba(249,250,247,.85);z-index:500;align-items:center;justify-content:center;}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── ADD KID BTN ── */
+.fab{
+  position:fixed;right:16px;bottom:calc(var(--nav-h) + 16px);
+  width:52px;height:52px;border-radius:50%;
+  background:var(--green);color:#fff;border:none;
+  font-size:26px;cursor:pointer;
+  display:none;align-items:center;justify-content:center;
+  box-shadow:0 4px 12px rgba(0,0,0,.2);
+  z-index:90;
+}
+.fab.show{display:flex;}
+</style>
+</head>
+<body>
+
+<div id="loading"><div class="spinner"></div></div>
+
+<header>
+  <span class="h-logo">⛳</span>
+  <div>
+    <div class="h-title">GC Montfort Rankweil</div>
+    <div class="h-sub">Jugendtraining · Mittwoch</div>
+  </div>
+</header>
+
+<div id="scroll-area">
+
+  <!-- PLANUNG -->
+  <div id="tab-plan" class="panel active">
+    <div class="week-bar">
+      <div>
+        <div class="week-date" id="plan-date"></div>
+        <div class="week-sub" id="plan-sub"></div>
+      </div>
+      <div class="week-nav">
+        <button class="wbtn" onclick="changeWeek(-1)">‹</button>
+        <button class="wbtn" onclick="changeWeek(1)">›</button>
+      </div>
+    </div>
+    <div class="time-label">16:00 Uhr — Gruppen C & D</div>
+    <div id="row-cd"></div>
+    <div class="time-label" style="margin-top:4px;">17:30 Uhr — Gruppen A & B</div>
+    <div id="row-ab"></div>
+    <div class="save-row">
+      <button class="btn-primary" id="save-btn" onclick="savePlan()">Speichern</button>
+      <button class="btn-ghost" onclick="clearPlan()">Leeren</button>
+      <span class="toast" id="save-toast">✓ Gespeichert</span>
+    </div>
+  </div>
+
+  <!-- ÜBERSICHT -->
+  <div id="tab-overview" class="panel">
+    <div class="ov-wrap">
+      <table class="ov-table">
+        <thead><tr>
+          <th>Datum</th>
+          <th>C (16h)</th><th>D (16h)</th>
+          <th>A (17:30)</th><th>B (17:30)</th>
+        </tr></thead>
+        <tbody id="ov-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- BERICHTE -->
+  <div id="tab-reports" class="panel">
+    <div class="week-bar">
+      <div>
+        <div class="week-date" id="rep-date"></div>
+        <div class="week-sub" id="rep-sub"></div>
+      </div>
+      <div class="week-nav">
+        <button class="wbtn" onclick="changeRepWeek(-1)">‹</button>
+        <button class="wbtn" onclick="changeRepWeek(1)">›</button>
+      </div>
+    </div>
+    <div id="rep-cards"></div>
+  </div>
+
+  <!-- TEILNEHMER -->
+  <div id="tab-kinder" class="panel">
+    <div class="sub-tabs">
+      <button class="sub-tab active" id="ktab-liste" onclick="switchKTab('liste')">Teilnehmerliste</button>
+      <button class="sub-tab" id="ktab-anwesenheit" onclick="switchKTab('anwesenheit')">Anwesenheit</button>
+    </div>
+    <div id="kpanel-liste"><div id="kinder-container"></div></div>
+    <div id="kpanel-anwesenheit" style="display:none;">
+      <div class="anw-filters">
+        <button class="gf-btn active" data-g="C" onclick="setAnwG('C')">C – Birdie 1</button>
+        <button class="gf-btn" data-g="D" onclick="setAnwG('D')">D – Par</button>
+        <button class="gf-btn" data-g="A" onclick="setAnwG('A')">A – Eagle</button>
+        <button class="gf-btn" data-g="B" onclick="setAnwG('B')">B – Birdie 2</button>
+      </div>
+      <div class="anw-legend">
+        <span><span class="leg-dot" style="background:#d1fae5;border:1px solid #6ee7b7;"></span>Anwesend</span>
+        <span><span class="leg-dot" style="background:#fef3c7;border:1px solid #fcd34d;"></span>Entschuldigt</span>
+        <span><span class="leg-dot" style="background:#fee2e2;border:1px solid #fca5a5;"></span>Unentschuldigt</span>
+      </div>
+      <div class="anw-wrap"><div id="anw-container"></div></div>
+    </div>
+  </div>
+
+  <!-- EINSTELLUNGEN -->
+  <div id="tab-settings" class="panel">
+    <div class="card">
+      <div class="card-title">Trainer verwalten</div>
+      <div id="trainer-list"></div>
+      <div class="add-row">
+        <input class="add-in" id="new-trainer" placeholder="Neuer Trainer…" onkeydown="if(event.key==='Enter')addTrainer()">
+        <button class="btn-primary" style="flex:0;padding:0 16px;" onclick="addTrainer()">+</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<nav>
+  <button class="nav-btn active" id="nb-plan" onclick="switchTab('plan')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+    Planung
+  </button>
+  <button class="nav-btn" id="nb-overview" onclick="switchTab('overview')">
+    <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+    Übersicht
+  </button>
+  <button class="nav-btn" id="nb-reports" onclick="switchTab('reports')">
+    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+    Berichte
+  </button>
+  <button class="nav-btn" id="nb-kinder" onclick="switchTab('kinder')">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+    Kinder
+  </button>
+  <button class="nav-btn" id="nb-settings" onclick="switchTab('settings')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+    Trainer
+  </button>
+</nav>
+
+<!-- FAB for adding kids -->
+<button class="fab" id="fab-add-kind" onclick="openKindDialog()">+</button>
+
+<!-- Kind Dialog -->
+<div class="dialog-bg" id="kind-dialog">
+  <div class="dialog">
+    <div class="dialog-title">Kind hinzufügen</div>
+    <select id="dk-gruppe">
+      <option value="C">Gruppe C – Birdie 1 (16:00)</option>
+      <option value="D">Gruppe D – Par (16:00)</option>
+      <option value="A">Gruppe A – Eagle (17:30)</option>
+      <option value="B">Gruppe B – Birdie 2 (17:30)</option>
+    </select>
+    <input id="dk-vorname" placeholder="Vorname">
+    <input id="dk-nachname" placeholder="Nachname">
+    <input id="dk-hcp" placeholder="HCP (optional)">
+    <input id="dk-alter" placeholder="Alter (optional)" type="number">
+    <div class="dialog-btns">
+      <button class="dialog-cancel" onclick="closeKindDialog()">Abbrechen</button>
+      <button class="dialog-ok" onclick="saveKind()">Speichern</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL='https://ajbbkpmvpirxbvyfobpj.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqYmJrcG12cGlyeGJ2eWZvYnBqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYyMDg2MTEsImV4cCI6MjA5MTc4NDYxMX0.KEWpKmJJnDg2e-vCVXH6pNUTDijpbLxdHsNQ5Yyndig';
+const GROUPS=[{id:'A',time:'17:30'},{id:'B',time:'17:30'},{id:'C',time:'16:00'},{id:'D',time:'16:00'}];
+const GNAME={A:'Eagle',B:'Birdie 2',C:'Birdie 1',D:'Par'};
+let trainers=[],planOffset=0,repOffset=0,planData={},anwGruppe='C',anwKids=[],anwData={},anwDates=[];
+let curVG=null,curVI={};
+
+// ── SUPABASE ──
+function sb(t){
+  const base=`${SB_URL}/rest/v1/${t}`;
+  const h={'apikey':SB_KEY,'Authorization':`Bearer ${SB_KEY}`,'Content-Type':'application/json','Prefer':'return=representation'};
+  return{
+    async get(q=''){const r=await fetch(q?`${base}?${q}`:base,{headers:h});if(!r.ok)throw new Error(await r.text());return r.json();},
+    async upsert(d,c=null){const url=c?`${base}?on_conflict=${c}`:base;const r=await fetch(url,{method:'POST',headers:{...h,'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(d)});if(!r.ok)throw new Error(await r.text());return r.json();},
+    async del(q){const r=await fetch(`${base}?${q}`,{method:'DELETE',headers:h});if(!r.ok)throw new Error(await r.text());}
+  };
+}
+
+// ── HELPERS ──
+function load(v){document.getElementById('loading').style.display=v?'flex':'none';}
+function wed(off=0){const d=new Date();const dy=d.getDay();const diff=(3-dy+7)%7||7;d.setDate(d.getDate()+diff+off*7);d.setHours(0,0,0,0);return d;}
+function iso(d){return d.toISOString().slice(0,10);}
+function fmtDE(d){return d.toLocaleDateString('de-AT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});}
+function fmtLong(d){return d.toLocaleDateString('de-AT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});}
+
+function wedgesUntilOct(){
+  const dates=[],d=wed(0),end=new Date(2026,9,31);
+  while(d<=end){dates.push(new Date(d));d.setDate(d.getDate()+7);}
+  return dates;
+}
+function pastWedges(){
+  const dates=[],d=new Date(2026,3,15),now=new Date();now.setHours(0,0,0,0);
+  while(d<now){dates.push(new Date(d));d.setDate(d.getDate()+7);}
+  return dates;
+}
+
+// ── TAB SWITCH ──
+function switchTab(name){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===`tab-${name}`));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.id===`nb-${name}`));
+  document.getElementById('fab-add-kind').classList.toggle('show',name==='kinder');
+  if(name==='plan')loadTrainers().then(()=>renderPlan());
+  else if(name==='overview')renderOverview();
+  else if(name==='reports')renderReports();
+  else if(name==='kinder')renderKinder();
+  else if(name==='settings')renderTrainers();
+}
+
+// ── TRAINERS ──
+async function loadTrainers(){
+  try{trainers=await sb('trainer').get('aktiv=eq.true&order=sort_order.asc');}
+  catch(e){console.error(e);trainers=[];}
+}
+function trOpts(sel=''){
+  return`<option value="">— offen —</option>`+trainers.map(t=>`<option value="${t.name}"${t.name===sel?' selected':''}>${t.name}</option>`).join('');
+}
+
+// ── PLAN ──
+function changeWeek(d){planOffset+=d;renderPlan();}
+async function renderPlan(){
+  const d=wed(planOffset),key=iso(d);
+  document.getElementById('plan-date').textContent=fmtLong(d);
+  document.getElementById('plan-sub').textContent=planOffset===0?'Nächster Mittwoch':'';
+  load(true);
+  try{const rows=await sb('training_planung').get(`datum=eq.${key}`);planData={};rows.forEach(r=>{planData[r.gruppe]=r;});}
+  catch(e){console.error(e);}
+  load(false);
+  ['cd','ab'].forEach(pair=>{
+    const grps=pair==='cd'?['C','D']:['A','B'];
+    const cont=document.getElementById(`row-${pair}`);
+    cont.innerHTML='';
+    grps.forEach(gid=>{
+      const g=GROUPS.find(x=>x.id===gid),data=planData[gid]||{};
+      const t1=data.trainer1||'',t2=data.trainer2||'',ab=data.abgesagt||false;
+      const card=document.createElement('div');
+      card.className='group-card'+(ab?' abgesagt':'');
+      card.innerHTML=`
+        <div class="gc-head">
+          <div class="gc-left">
+            <div class="gc-badge badge-${gid}">${gid}</div>
+            <div><div class="gc-name">Gruppe ${gid} — ${GNAME[gid]}</div><div class="gc-time">${g.time} Uhr</div></div>
+          </div>
+        </div>
+        <div class="slot-row"><span class="slot-label">Trainer 1</span>
+          <select class="t-select${t1?' filled':''}" id="s${gid}1" onchange="this.classList.toggle('filled',!!this.value)"${ab?' disabled':''}>${trOpts(t1)}</select>
+        </div>
+        <div class="slot-row"><span class="slot-label">Trainer 2</span>
+          <select class="t-select${t2?' filled':''}" id="s${gid}2" onchange="this.classList.toggle('filled',!!this.value)"${ab?' disabled':''}>
+            <option value="">— optional —</option>${trainers.map(t=>`<option value="${t.name}"${t.name===t2?' selected':''}>${t.name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="abgesagt-row">
+          <label><input type="checkbox" id="chk${gid}"${ab?' checked':''} onchange="toggleAbgesagt('${gid}',this)"><span style="color:${ab?'var(--red)':'var(--muted)'}">Training fällt aus</span></label>
+        </div>
+        <button class="vorschlag-btn" id="vbtn${gid}" onclick="toggleVorschlag('${gid}')">
+          <span>✦ Trainingsvorschlag</span><span class="vb-icon">▼</span>
+        </button>
+        <div class="vorschlag-body" id="vacc${gid}"></div>
+      `;
+      cont.appendChild(card);
+    });
+  });
+}
+
+function toggleAbgesagt(gid,cb){
+  const card=cb.closest('.group-card');
+  card.classList.toggle('abgesagt',cb.checked);
+  cb.nextElementSibling.style.color=cb.checked?'var(--red)':'var(--muted)';
+  ['s'+gid+'1','s'+gid+'2'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=cb.checked;});
+}
+
+async function savePlan(){
+  const key=iso(wed(planOffset));
+  const btn=document.getElementById('save-btn');btn.disabled=true;
+  const rows=GROUPS.map(g=>({
+    datum:key,gruppe:g.id,
+    trainer1:document.getElementById('s'+g.id+'1')?.value||null,
+    trainer2:document.getElementById('s'+g.id+'2')?.value||null,
+    abgesagt:document.getElementById('chk'+g.id)?.checked||false,
+    updated_at:new Date().toISOString()
+  }));
+  try{
+    await sb('training_planung').upsert(rows,'datum,gruppe');
+    const t=document.getElementById('save-toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);
+  }catch(e){alert('Fehler beim Speichern');}
+  btn.disabled=false;
+}
+
+async function clearPlan(){
+  if(!confirm('Einträge für diesen Mittwoch leeren?'))return;
+  load(true);try{await sb('training_planung').del(`datum=eq.${iso(wed(planOffset))}`)}catch(e){}load(false);
+  renderPlan();
+}
+
+// ── VORSCHLAG ──
+const VORSCHLAEGE={
+  A:[
+    {aufwaermen:['Lockeres Einschlagen am Range (10 Min): halbe Schwünge mit Eisen 7, dann volle Schwünge steigern','Putting-Warm-up: 5 Putts aus je 1m, 2m, 3m — Fokus auf Tempo'],technik:['Ballflugkontrolle (20 Min): absichtlich Draw und Fade spielen mit Mittel-Eisen','Bunker-Training (15 Min): Explosionsschlag aus Sand, verschiedene Liegelagen','Approach (20 Min): von 80–120m auf Zielgrün, Fahnen in verschiedenen Positionen'],spiele:['Lochspiel 1vs1 (20 Min): 3 Löcher gegeneinander, Fokus auf Strategie & Ruhe unter Druck'],abschluss:'Feedback-Gespräch: Was war gut? Was nehme ich mit zur nächsten Runde?',material:['Eisensatz','Wedges','Putter'],tipp:'Mentale Strategien einbauen — wie verhalte ich mich nach einem Fehler?'},
+    {aufwaermen:['Dehnübungen Schulter & Hüfte (5 Min)','Chip-Warm-up: 10 Chips auf 3 verschiedene Ziele, Flug- und Rollanteil beobachten'],technik:['Eisenspiel vom Hang (20 Min): aufsteigender & absteigender Hang','Pitching-Serie (20 Min): 30m / 50m / 70m — Distanzkontrolle durch Schwunglänge','3-Putt-Elimination (15 Min): nur 2 Putts pro Loch erlaubt'],spiele:['Chip auf Handtuch-Ziele (15 Min): wer trifft am meisten in verschiedenen Distanzen?'],abschluss:'Schwunganalyse: Trainer gibt individuelle Rückmeldung zu einem Aspekt pro Spieler.',material:['Wedges','Eisen','Handtücher als Ziele','Putter'],tipp:'Fortgeschrittene profitieren von Video-Feedback — Handy kurz aufstellen und Schwung aufnehmen.'},
+    {aufwaermen:['3 Löcher freies Einschlagen, eigene Schwerpunkte setzen','Speed-Putting: wer braucht am wenigsten Putts für 9 Bälle auf 3 Löcher?'],technik:['Driver-Training (20 Min): Körperrotation & Timing','Bump & Run vs. Lob (20 Min): wann welcher Schlag?','Platz-Simulation (20 Min): Loch 1–3 spielen, jeden Weg bewusst planen'],spiele:['Nächste-Fahne-Wettbewerb (15 Min): Chip/Pitch möglichst nahe an die Fahne'],abschluss:'Strategie-Talk: Welche 3 Löcher am Platz sind am schwierigsten — und warum?',material:['Driver','Alle Wedges','Tees','Scorecard'],tipp:'Nicht immer der längste, sondern der klügste Schlag gewinnt.'}
+  ],
+  B:[
+    {aufwaermen:['Koordination (5 Min): Ball jonglieren, fallen lassen & aufheben','Einschlagen Eisen 7 (10 Min): ruhiger Kopf, sauberer Treffmoment'],technik:['Grip & Setup-Check (10 Min): jeder zeigt seinen Griff, Trainer korrigiert','Eisenserie (20 Min): Eisen 9, 7, 5 nacheinander — gleicher Rhythmus','Chip-Übung (20 Min): von 5m / 10m / 15m auf Ziel — Rollanteil beachten'],spiele:['Chip-Turnier (20 Min): 5 Versuche, Punkte für Nähe zur Fahne','Minigolf-Putting (10 Min): Hindernisse aus Tees aufbauen'],abschluss:'Jeder nennt eine Sache, die heute besser war als beim letzten Training.',material:['Eisen 5/7/9','Wedge','Putter','Tees als Markierungen'],tipp:'Schwunglänge reduzieren — erst halber Schwung perfektionieren, dann ausbauen.'},
+    {aufwaermen:['Laufen & Stopp (5 Min): auf Pfiff sofort stoppen — Reaktion','Putten auf Tee-Markierung (5 Min): Ball soll exakt auf Ziel rollen'],technik:['Pitching-Technik (20 Min): Y-Form der Arme, Hüfte dreht durch','Fairway-Holz / Hybrid einführen (20 Min)','Bunker-Kennenlernen (15 Min): erste Versuche im Sand'],spiele:['Loch-in-One-Wettbewerb (15 Min): Chip aufs Grün — wer kommt am nächsten?','Team-Putting (10 Min): 2er-Teams abwechselnd aus 4m'],abschluss:'Regelkunde (5 Min): Was darf ich im Bunker — und was nicht?',material:['Wedges','Hybrid','Putter','Regelkarte'],tipp:'Ältere Spieler können Jüngeren helfen — das festigt das Wissen bei beiden.'},
+    {aufwaermen:['Balance (5 Min): auf einem Bein stehen, Ball halten','Einschlagen (10 Min): jeder wählt seinen Lieblingsschläger'],technik:['Setup: Ballposition für verschiedene Schläger (15 Min)','Abschlag-Training (20 Min): sauber in die Fairwaymitte','Putting-Linie lesen (20 Min): Gefälle erkennen, wo ziele ich hin?'],spiele:['Tee-Bowling (15 Min): rollender Ball trifft möglichst viele Tees','Längster Putt (10 Min): wer versenkt aus der größten Distanz?'],abschluss:'Gemeinsam 1 Loch besichtigen und Strategie besprechen — ohne zu spielen.',material:['Eisen/Driver','Putter','Tees'],tipp:'Ballposition selbst variieren lassen — Experimentieren fördert Körpergefühl.'}
+  ],
+  C:[
+    {aufwaermen:['Dehnübungen im Kreis (5 Min): Schultern, Hüfte, Rücken','Einschlagen Eisen 8 (10 Min): Treffbild auf dem Schläger beobachten'],technik:['Grip-Wiederholung (10 Min): Vardon, Interlocking, Baseball zeigen','Schwungpfad (20 Min): Gerade-Schlag mit Ausrichtungsstäben','Putting-Grundlagen (20 Min): Pendelschlag, Putterkopf gerade halten'],spiele:['Chip & Putt Wettbewerb (20 Min): Chip aufs Grün, dann einputten — wer braucht am wenigsten?'],abschluss:'Wann benutze ich welchen Schläger? Einfache Faustregeln.',material:['Eisen 8','Wedge','Putter','Ausrichtungsstäbe'],tipp:'Wiederholung schafft Routine und Selbstvertrauen — immer wieder zurück zu den Grundlagen.'},
+    {aufwaermen:['Ball prellen mit Schlägerseite (5 Min)','Zielputten (10 Min): 5 Bälle aus 2m — Routine entwickeln'],technik:['Abschwung & Durchschwung (20 Min): Gewicht auf vorderen Fuß','Chip vs. Pitch (20 Min): Unterschied erklären und beide üben','Platzregel (10 Min): Wasserhindernis, Aus, Unspielbar'],spiele:['Zielwerfen Staffel (15 Min): 2 Teams, Chip auf Zielbereiche','Putting-Schnecke (10 Min): spiralförmig von 1m bis 5m'],abschluss:'Jeder zeigt einen Chip — Trainer gibt Lob + einen Verbesserungstipp.',material:['Wedge','Eisen','Putter','Markierungen'],tipp:'"Pendel wie Uhr" für Putten, "Türe aufmachen" für Durchschwung — Bilder helfen!'},
+    {aufwaermen:['Ball hochwerfen und mit Schläger auffangen (5 Min)','Einschlagen: kurze und lange Schläger abwechseln, Rhythmus erspüren'],technik:['Vollschwung-Analyse (20 Min): Trainer gibt jedem einen Tipp','Annäherungsschläge (20 Min): 30m / 50m / 70m — gleicher Schwung','Sand kennenlernen (10 Min): im Bunker stehen, erste Versuche'],spiele:['Flagge-Treffen (15 Min): 5 Bälle chippen, Punkte für Nähe','Putting-Staffel (10 Min): Teams putten abwechselnd dasselbe Loch'],abschluss:'Hausaufgabe: 10 Min täglich mit Putter zu Hause auf Teppich üben.',material:['Schläger-Set','Wedges','Putter'],tipp:'Geduld — der Sprung von "ich versuche es" zu "ich kann es" braucht viele Wiederholungen.'}
+  ],
+  D:[
+    {aufwaermen:['Fangspiel mit Golfball (5 Min): werfen und fangen','Balancieren auf einem Bein (3 Min): wer hält am längsten?'],technik:['Grip-Einführung (10 Min): Schläger halten wie einen Eis-Stiel — nicht zu fest!','Erster Schwung (15 Min): Hula-Hoop-Bewegung der Hüfte, Arme folgen nach','Putten lernen (10 Min): Ball ins Loch rollen'],spiele:['Tee-Weitwurf (10 Min): wer wirft das Tee am weitesten?','Chip-Zielspiel (15 Min): Ball in Hula-Hoop-Reifen chippen aus 3m','Putting-Wettrennen (15 Min): 2 Teams putten gleichzeitig — wer ist schneller drin?'],abschluss:'Jedes Kind darf einmal mit einem richtigen Driver abschlagen!',material:['Kinder-Schläger','Hula-Hoop-Reifen','Tees','Driver'],tipp:'Maximal 5 Min pro Übung, dann Wechsel — kurze Aufmerksamkeitsspanne einplanen!'},
+    {aufwaermen:['Versteckspiel (5 Min): Trainer versteckt Tees, Kinder suchen sie','Einschlagen (5 Min): einfach draufschlagen, Spaß haben!'],technik:['Ball tee-en lernen (10 Min): wie stecke ich das Tee rein? Wie hoch?','Eisenschlag-Grundlagen (15 Min): Stand, Griff, auf Ball schauen','Kurzspiel (10 Min): erster Chip mit Wedge'],spiele:['Golf-Bowling (15 Min): Wasserflaschen als Kegel, Ball hineinchippen','Längstes Schlagen (10 Min): alle feuern an!','Mannschafts-Putting (15 Min): 2 Teams, Teampunkte sammeln'],abschluss:'Jedes Kind sagt seinen Lieblingsmoment vom heutigen Training.',material:['Kinder-Schläger','Wasserflaschen','Putter','Tees'],tipp:'Lob ist alles — jeden Treffer feiern, egal wie der Ball fliegt!'},
+    {aufwaermen:['Simon sagt — Golf-Edition (5 Min)','Aufwärmlauf um den Übungsplatz (3 Min)'],technik:['Schläger kennenlernen (10 Min): welcher Schläger macht was? Kinder raten!','Schwungrhythmus mit Musik (15 Min): langsam zurück, schnell durch!','Putten mit Slalom (10 Min): Tees als Hindernisse aufstellen'],spiele:['Golf-Staffel (15 Min): Team schlägt abwechselnd denselben Ball ans Ziel','Schaumstoffbälle werfen (10 Min): auf Zielbereiche','Nächste-Fahne-Challenge (15 Min): Chip möglichst nahe an die Fahne'],abschluss:'Urkunde des Tages: Trainer erfindet lustigen Titel für jedes Kind.',material:['Kinder-Schläger','Schaumstoffbälle','Tees','Putter'],tipp:'Kinder lernen durch Nachahmung — Übungen selbst vorführen, nicht nur erklären!'}
+  ]
+};
+
+function toggleVorschlag(gid){
+  curVG=gid;
+  const acc=document.getElementById('vacc'+gid);
+  const btn=document.getElementById('vbtn'+gid);
+  const wasOpen=acc.classList.contains('open');
+  // Close all
+  document.querySelectorAll('.vorschlag-body').forEach(a=>a.classList.remove('open'));
+  document.querySelectorAll('.vorschlag-btn').forEach(b=>b.classList.remove('open'));
+  if(!wasOpen){
+    acc.classList.add('open');btn.classList.add('open');
+    const weekN=Math.floor((new Date()-new Date(2026,3,15))/(7*864e5));
+    if(curVI[gid]===undefined)curVI[gid]=weekN%3;
+    renderVorschlag(gid);
+    setTimeout(()=>acc.scrollIntoView({behavior:'smooth',block:'nearest'}),60);
+  }
+}
+
+function renderVorschlag(gid){
+  const idx=curVI[gid]||0;const total=VORSCHLAEGE[gid].length;const p=VORSCHLAEGE[gid][idx];
+  const acc=document.getElementById('vacc'+gid);
+  acc.innerHTML=`
+    <div class="va-nav">
+      <button class="va-nav-btn" onclick="stepV(-1)">‹</button>
+      <span class="va-label">Vorschlag ${idx+1} von ${total}</span>
+      <button class="va-nav-btn" onclick="stepV(1)">›</button>
+    </div>
+    <div class="vs-section warm"><div class="vs-title">🏃 Aufwärmen</div><ul>${p.aufwaermen.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <div class="vs-section tech"><div class="vs-title">⛳ Technische Übungen</div><ul>${p.technik.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    ${p.spiele.length?`<div class="vs-section game"><div class="vs-title">🎯 Spiele & Wettbewerbe</div><ul>${p.spiele.map(x=>`<li>${x}</li>`).join('')}</ul></div>`:''}
+    <div class="vs-section end"><div class="vs-title">✓ Abschluss</div><p>${p.abschluss}</p></div>
+    <div class="vs-section mat"><div class="vs-title">📦 Material</div><p>${p.material.join(' · ')}</p></div>
+    <div class="vs-section tip"><div class="vs-title">💡 Trainer-Tipp</div><p>${p.tipp}</p></div>
+    <button class="vs-use-btn" onclick="useVorschlag()">Als Trainingshinweis in Bericht übernehmen</button>
+  `;
+}
+function stepV(dir){curVI[curVG]=(((curVI[curVG]||0)+dir)%3+3)%3;renderVorschlag(curVG);}
+function useVorschlag(){
+  const p=VORSCHLAEGE[curVG][curVI[curVG]||0];
+  const txt=`🏃 Aufwärmen: ${p.aufwaermen.join(' / ')}\n⛳ Technik: ${p.technik.join(' / ')}\n🎯 Spiele: ${p.spiele.join(' / ')}`;
+  document.getElementById('vacc'+curVG).classList.remove('open');
+  document.getElementById('vbtn'+curVG).classList.remove('open');
+  switchTab('reports');
+  setTimeout(()=>{const ta=document.getElementById('rtxt'+curVG);if(ta&&!ta.value)ta.value='Geplant:\n'+txt;},300);
+}
+
+// ── OVERVIEW ──
+async function renderOverview(){
+  const dates=wedgesUntilOct(),keys=dates.map(iso);
+  load(true);let rows=[];
+  try{rows=await sb('training_planung').get(`datum=gte.${keys[0]}&datum=lte.${keys[keys.length-1]}&order=datum`);}
+  catch(e){}load(false);
+  const byDate={};rows.forEach(r=>{if(!byDate[r.datum])byDate[r.datum]={};byDate[r.datum][r.gruppe]=r;});
+  const tbody=document.getElementById('ov-body');tbody.innerHTML='';
+  let lastMon=null;const nextKey=iso(wed(0));
+  dates.forEach(d=>{
+    const key=iso(d);const data=byDate[key]||{};const isNext=key===nextKey;
+    const mon=d.toLocaleDateString('de-AT',{month:'long',year:'numeric'});
+    if(mon!==lastMon){lastMon=mon;const sep=document.createElement('tr');sep.className='ov-month';sep.innerHTML=`<td colspan="5">${mon}</td>`;tbody.appendChild(sep);}
+    const tr=document.createElement('tr');if(isNext)tr.className='ov-next';
+    const cell=g=>{const r=data[g];if(r?.abgesagt)return'<span class="pill pill-red">⊘ Abgesagt</span>';const ns=[r?.trainer1,r?.trainer2].filter(Boolean);return ns.length?ns.map(n=>`<span class="pill">${n.split(' ')[0]}</span>`).join(''):'<span class="empty">offen</span>';};
+    tr.innerHTML=`<td class="date-col">${d.getDate()}.${d.getMonth()+1}.${isNext?'<br><b style="color:var(--green)">→ Nächste</b>':''}</td><td>${cell('C')}</td><td>${cell('D')}</td><td>${cell('A')}</td><td>${cell('B')}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── REPORTS ──
+function changeRepWeek(d){repOffset+=d;renderReports();}
+async function renderReports(){
+  const d=wed(repOffset),key=iso(d);
+  document.getElementById('rep-date').textContent=fmtLong(d);
+  document.getElementById('rep-sub').textContent=repOffset===0?'Nächster Mittwoch':'';
+  load(true);let pRows=[],rRows=[];
+  try{[pRows,rRows]=await Promise.all([sb('training_planung').get(`datum=eq.${key}`),sb('training_berichte').get(`datum=eq.${key}`)]);}
+  catch(e){}load(false);
+  const pm={},rm={};pRows.forEach(r=>{pm[r.gruppe]=r;});rRows.forEach(r=>{rm[r.gruppe]=r;});
+  const cont=document.getElementById('rep-cards');cont.innerHTML='';
+  ['C','D','A','B'].forEach(gid=>{
+    const g=GROUPS.find(x=>x.id===gid),plan=pm[gid]||{},rep=rm[gid]||{};
+    const trStr=[plan.trainer1,plan.trainer2].filter(Boolean).join(' & ')||'Kein Trainer';
+    const card=document.createElement('div');card.className='report-card';
+    card.innerHTML=`
+      <div class="rc-head">
+        <div class="rc-left">
+          <div class="gc-badge badge-${gid}">${gid}</div>
+          <div><div style="font-size:14px;font-weight:500;">Gruppe ${gid} — ${GNAME[gid]} <span style="font-size:12px;font-weight:400;color:var(--muted)">${g.time} Uhr</span></div>
+          <div class="rc-trainer">${trStr}</div></div>
+        </div>
+        <span class="rc-saved" id="rsaved${gid}">✓</span>
+      </div>
+      <textarea class="rtxt" id="rtxt${gid}" placeholder="Was wurde heute trainiert?">${rep.bericht||''}</textarea>
+      <div class="rc-foot"><button class="btn-sm" onclick="saveReport('${key}','${gid}')">Speichern</button></div>`;
+    cont.appendChild(card);
+  });
+}
+async function saveReport(key,gid){
+  try{
+    await sb('training_berichte').upsert([{datum:key,gruppe:gid,bericht:document.getElementById('rtxt'+gid).value,updated_at:new Date().toISOString()}],'datum,gruppe');
+    const el=document.getElementById('rsaved'+gid);el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2500);
+  }catch(e){alert('Fehler beim Speichern');}
+}
+
+// ── KINDER ──
+function switchKTab(n){
+  ['liste','anwesenheit'].forEach(t=>{
+    document.getElementById('ktab-'+t).classList.toggle('active',t===n);
+    document.getElementById('kpanel-'+t).style.display=t===n?'block':'none';
+  });
+  if(n==='anwesenheit')renderAnwesenheit();
+}
+async function renderKinder(){
+  load(true);let kids=[];
+  try{kids=await sb('kinder').get('order=gruppe.asc&order=nachname.asc');}catch(e){}load(false);
+  const byG={A:[],B:[],C:[],D:[]};kids.forEach(k=>{if(byG[k.gruppe])byG[k.gruppe].push(k);});
+  const cont=document.getElementById('kinder-container');cont.innerHTML='';
+  ['C','D','A','B'].forEach(gid=>{
+    const ks=byG[gid];const block=document.createElement('div');block.className='kinder-block';
+    block.innerHTML=`<div class="kinder-header"><div class="gc-badge badge-${gid}" style="width:30px;height:30px;font-size:13px;">${gid}</div><div class="kinder-info">Gruppe ${gid} — ${GNAME[gid]}</div><div class="kinder-count">${ks.length} Kinder</div></div>`;
+    const table=document.createElement('table');table.className='k-table';
+    table.innerHTML=`<thead><tr><th>#</th><th>Name</th><th>Vorname</th><th>HCP</th><th>Alt</th><th></th></tr></thead><tbody id="kb${gid}"></tbody>`;
+    block.appendChild(table);cont.appendChild(block);
+    const tbody=table.querySelector('#kb'+gid);
+    if(!ks.length){tbody.innerHTML=`<tr><td colspan="6" style="padding:12px;text-align:center;color:var(--muted);font-style:italic;">Keine Kinder</td></tr>`;}
+    ks.forEach((k,i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td style="color:var(--muted);font-size:11px;">${i+1}</td><td style="font-weight:500;">${k.nachname}</td><td>${k.vorname}</td><td style="font-size:12px;">${k.hcp||'—'}</td><td style="font-size:12px;">${k.alter_kind||'—'}</td><td><button class="k-del">×</button></td>`;
+      tr.querySelector('.k-del').onclick=()=>removeKind(k.id,k.vorname+' '+k.nachname);
+      tbody.appendChild(tr);
+    });
+  });
+}
+function openKindDialog(){document.getElementById('kind-dialog').classList.add('open');}
+function closeKindDialog(){document.getElementById('kind-dialog').classList.remove('open');['dk-vorname','dk-nachname','dk-hcp','dk-alter'].forEach(id=>document.getElementById(id).value='');}
+async function saveKind(){
+  const vn=document.getElementById('dk-vorname').value.trim(),nn=document.getElementById('dk-nachname').value.trim();
+  if(!vn||!nn){alert('Bitte Vor- und Nachname eingeben.');return;}
+  try{
+    await sb('kinder').upsert([{gruppe:document.getElementById('dk-gruppe').value,vorname:vn,nachname:nn,hcp:document.getElementById('dk-hcp').value.trim()||null,alter_kind:parseInt(document.getElementById('dk-alter').value)||null}]);
+    closeKindDialog();await renderKinder();
+  }catch(e){alert('Fehler beim Speichern.');}
+}
+async function removeKind(id,name){
+  if(!confirm(`"${name}" entfernen?`))return;
+  try{await sb('kinder').del(`id=eq.${id}`);await renderKinder();}catch(e){alert('Fehler');}
+}
+
+// ── ANWESENHEIT ──
+function setAnwG(g){
+  anwGruppe=g;
+  document.querySelectorAll('.gf-btn').forEach(b=>b.classList.toggle('active',b.dataset.g===g));
+  renderAnwesenheit();
+}
+async function renderAnwesenheit(){
+  load(true);
+  try{
+    anwKids=await sb('kinder').get(`gruppe=eq.${anwGruppe}&order=nachname.asc`);
+    const past=pastWedges(),future=wedgesUntilOct();
+    const seen=new Set();anwDates=[...past,...future].filter(d=>{const k=iso(d);if(seen.has(k))return false;seen.add(k);return true;}).sort((a,b)=>a-b);
+    if(!anwKids.length){document.getElementById('anw-container').innerHTML='<p style="color:var(--muted);font-size:13px;padding:12px;">Keine Kinder in dieser Gruppe.</p>';load(false);return;}
+    const kindIds=anwKids.map(k=>k.id);const dateKeys=anwDates.map(iso);
+    const rows=await sb('anwesenheit').get(`kind_id=in.(${kindIds.join(',')})&datum=in.(${dateKeys.join(',')})&order=datum`);
+    anwData={};anwKids.forEach(k=>{anwData[k.id]={};});
+    rows.forEach(r=>{if(anwData[r.kind_id])anwData[r.kind_id][r.datum]=r.status;});
+  }catch(e){console.error(e);}
+  load(false);buildAnwTable();
+}
+function buildAnwTable(){
+  const nextWed=iso(wed(0));
+  const vis=anwDates.filter(d=>iso(d)<=nextWed);
+  const SYM={anwesend:'✓',entschuldigt:'E',unentschuldigt:'U'};
+  const CLS={anwesend:'anw-a',entschuldigt:'anw-e',unentschuldigt:'anw-u'};
+  let h=`<table class="anw-table"><thead><tr><th class="name-th">Name</th>`;
+  vis.forEach(d=>{const isN=iso(d)===nextWed;h+=`<th style="color:${isN?'var(--green)':'var(--muted)'};font-weight:${isN?600:400}"><div>${d.getDate()}.</div><div style="font-size:9px;">${d.toLocaleDateString('de-AT',{month:'short'})}</div></th>`;});
+  h+=`<th class="stat-td" style="color:#065f46;">A</th><th class="stat-td" style="color:#92400e;">E</th><th class="stat-td" style="color:#991b1b;">U</th></tr></thead><tbody>`;
+  anwKids.forEach(k=>{
+    let cA=0,cE=0,cU=0;
+    let cells='';
+    vis.forEach(d=>{
+      const key=iso(d),st=anwData[k.id]?.[key]||null;
+      if(st==='anwesend')cA++;else if(st==='entschuldigt')cE++;else if(st==='unentschuldigt')cU++;
+      cells+=`<td><div class="anw-cell ${st?CLS[st]:'anw-none'}" data-kid="${k.id}" data-date="${key}" data-st="${st||''}" onclick="cycleAnw(this)">${st?SYM[st]:''}</div></td>`;
+    });
+    h+=`<tr><td class="name-td">${k.nachname} ${k.vorname}</td>${cells}<td class="stat-td" style="color:#065f46;">${cA||''}</td><td class="stat-td" style="color:#92400e;">${cE||''}</td><td class="stat-td" style="color:#991b1b;">${cU||''}</td></tr>`;
+  });
+  h+='</tbody></table>';
+  document.getElementById('anw-container').innerHTML=h;
+}
+async function cycleAnw(cell){
+  const cycle=[null,'anwesend','entschuldigt','unentschuldigt'];
+  const SYM={anwesend:'✓',entschuldigt:'E',unentschuldigt:'U'};
+  const CLS={anwesend:'anw-a',entschuldigt:'anw-e',unentschuldigt:'anw-u'};
+  const cur=cell.dataset.st||null;const next=cycle[(cycle.indexOf(cur)+1)%4];
+  cell.dataset.st=next||'';cell.textContent=next?SYM[next]:'';
+  cell.className='anw-cell '+(next?CLS[next]:'anw-none');
+  if(!anwData[cell.dataset.kid])anwData[cell.dataset.kid]={};
+  anwData[cell.dataset.kid][cell.dataset.date]=next;
+  // Update stats
+  const row=cell.closest('tr'),all=row.querySelectorAll('.anw-cell');
+  let cA=0,cE=0,cU=0;all.forEach(c=>{if(c.dataset.st==='anwesend')cA++;else if(c.dataset.st==='entschuldigt')cE++;else if(c.dataset.st==='unentschuldigt')cU++;});
+  const tds=Array.from(row.querySelectorAll('td')).slice(-3);
+  tds[0].textContent=cA||'';tds[1].textContent=cE||'';tds[2].textContent=cU||'';
+  try{
+    if(next)await sb('anwesenheit').upsert([{kind_id:cell.dataset.kid,datum:cell.dataset.date,status:next,updated_at:new Date().toISOString()}],'kind_id,datum');
+    else await sb('anwesenheit').del(`kind_id=eq.${cell.dataset.kid}&datum=eq.${cell.dataset.date}`);
+  }catch(e){console.error(e);}
+}
+
+// ── TRAINER SETTINGS ──
+async function renderTrainers(){
+  await loadTrainers();
+  const list=document.getElementById('trainer-list');list.innerHTML='';
+  trainers.forEach(t=>{
+    const row=document.createElement('div');row.className='tr-row';
+    const span=document.createElement('span');span.className='tr-name';span.textContent=t.name;
+    const btn=document.createElement('button');btn.className='tr-del';btn.textContent='×';
+    btn.onclick=()=>removeTrainer(t.id,t.name);
+    row.appendChild(span);row.appendChild(btn);list.appendChild(row);
+  });
+}
+async function addTrainer(){
+  const inp=document.getElementById('new-trainer'),name=inp.value.trim();if(!name)return;
+  try{await sb('trainer').upsert([{name,aktiv:true,sort_order:trainers.length+1}],'name');inp.value='';await renderTrainers();}
+  catch(e){alert('Fehler: Name bereits vorhanden?');}
+}
+async function removeTrainer(id,name){
+  if(!confirm(`"${name}" entfernen?`))return;
+  try{await sb('trainer').del(`id=eq.${id}`);await renderTrainers();}catch(e){alert('Fehler');}
+}
+
+// ── INIT ──
+(async()=>{
+  load(true);await loadTrainers();load(false);renderPlan();
+})();
+</script>
+</body>
+</html>
