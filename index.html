@@ -267,7 +267,20 @@ textarea.rtxt{
   background:var(--bg);resize:vertical;line-height:1.55;
 }
 textarea.rtxt:focus{outline:none;border-color:var(--green);}
-.rc-foot{display:flex;justify-content:flex-end;margin-top:8px;}
+.rc-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px;}
+.mic-btn{
+  width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-size:20px;
+  background:var(--bg);border:1px solid var(--border);
+  transition:all .2s;flex-shrink:0;
+}
+.mic-btn.listening{
+  background:#fee2e2;border-color:#fca5a5;
+  animation:pulse 1s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.1);}}
+.mic-hint{font-size:11px;color:var(--muted);margin-top:4px;display:none;}
+.mic-hint.show{display:block;}
 .btn-sm{height:40px;padding:0 18px;background:var(--green);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;}
 
 /* ── KINDER TABS ── */
@@ -845,7 +858,11 @@ async function renderReports(){
         <span class="rc-saved" id="rsaved${gid}">✓</span>
       </div>
       <textarea class="rtxt" id="rtxt${gid}" placeholder="Was wurde heute trainiert?">${rep.bericht||''}</textarea>
-      <div class="rc-foot"><button class="btn-sm" onclick="saveReport('${key}','${gid}')">Speichern</button></div>`;
+      <div class="mic-hint" id="mic-hint${gid}">🎙 Sprachaufnahme läuft… Sprechen!</div>
+      <div class="rc-foot">
+        <button class="mic-btn" id="mic${gid}" onclick="toggleMic('${gid}')" title="Spracheingabe">🎙</button>
+        <button class="btn-sm" onclick="saveReport('${key}','${gid}')">Speichern</button>
+      </div>`;
     cont.appendChild(card);
   });
 }
@@ -979,6 +996,73 @@ async function cycleAnw(cell){
     if(next)await sb('anwesenheit').upsert([{kind_id:cell.dataset.kid,datum:cell.dataset.date,status:next,updated_at:new Date().toISOString()}],'kind_id,datum');
     else await sb('anwesenheit').del(`kind_id=eq.${cell.dataset.kid}&datum=eq.${cell.dataset.date}`);
   }catch(e){console.error(e);}
+}
+
+// ── SPRACHEINGABE ──
+let activeRecognition=null;
+let activeMicGid=null;
+
+function toggleMic(gid){
+  // Stop if already running
+  if(activeRecognition && activeMicGid===gid){
+    activeRecognition.stop();
+    return;
+  }
+  // Stop any other running mic
+  if(activeRecognition){activeRecognition.stop();}
+
+  const SpeechRecognition=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SpeechRecognition){
+    alert('Spracheingabe wird von diesem Browser leider nicht unterstützt. Bitte Chrome oder Safari verwenden.');
+    return;
+  }
+
+  const recognition=new SpeechRecognition();
+  recognition.lang='de-AT';
+  recognition.continuous=true;
+  recognition.interimResults=true;
+
+  const ta=document.getElementById('rtxt'+gid);
+  const btn=document.getElementById('mic'+gid);
+  const hint=document.getElementById('mic-hint'+gid);
+  const startText=ta.value;
+  let interim='';
+
+  recognition.onstart=()=>{
+    activeRecognition=recognition;activeMicGid=gid;
+    btn.classList.add('listening');btn.textContent='⏹';
+    hint.classList.add('show');
+  };
+
+  recognition.onresult=(e)=>{
+    interim='';
+    let final='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal) final+=e.results[i][0].transcript+' ';
+      else interim+=e.results[i][0].transcript;
+    }
+    // Append finalized text, show interim in grey via placeholder trick
+    if(final) ta.value=(ta.value+final).trimStart();
+    ta.placeholder=interim||'Was wurde heute trainiert?';
+  };
+
+  recognition.onerror=(e)=>{
+    if(e.error==='not-allowed') alert('Bitte Mikrofon-Zugriff erlauben.');
+    stopMic(gid);
+  };
+
+  recognition.onend=()=>{ stopMic(gid); };
+
+  recognition.start();
+  activeRecognition=recognition;
+}
+
+function stopMic(gid){
+  const btn=document.getElementById('mic'+gid);
+  const hint=document.getElementById('mic-hint'+gid);
+  if(btn){btn.classList.remove('listening');btn.textContent='🎙';}
+  if(hint){hint.classList.remove('show');}
+  activeRecognition=null;activeMicGid=null;
 }
 
 // ── TRAINER SETTINGS ──
