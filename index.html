@@ -552,7 +552,7 @@ function sb(t){
 
 // ── HELPERS ──
 function load(v){document.getElementById('loading').style.display=v?'flex':'none';}
-function wed(off=0){const d=new Date();const dy=d.getDay();const diff=(3-dy+7)%7||7;d.setDate(d.getDate()+diff+off*7);d.setHours(0,0,0,0);return d;}
+function wed(off=0){const d=new Date();const dy=d.getDay();const diff=(3-dy+7)%7;d.setDate(d.getDate()+diff+off*7);d.setHours(0,0,0,0);return d;}
 function iso(d){return d.toISOString().slice(0,10);}
 function fmtDE(d){return d.toLocaleDateString('de-AT',{weekday:'short',day:'2-digit',month:'2-digit',year:'numeric'});}
 function fmtLong(d){return d.toLocaleDateString('de-AT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});}
@@ -596,7 +596,8 @@ async function renderPlan(){
   const today=new Date();today.setHours(0,0,0,0);
   const isPast=d<today;
   document.getElementById('plan-date').textContent=fmtLong(d);
-  document.getElementById('plan-sub').textContent=planOffset===0?'Nächster Mittwoch':(isPast?'Vergangenes Training':'');
+  const today=new Date();const isToday=wed(0).toDateString()===today.toDateString();
+  document.getElementById('plan-sub').textContent=planOffset===0?(isToday?'Heutiges Training':'Aktueller Mittwoch'):(isPast?'Vergangenes Training':'');
   load(true);
   let repData={};
   try{
@@ -838,7 +839,7 @@ function changeRepWeek(d){repOffset+=d;renderReports();}
 async function renderReports(){
   const d=wed(repOffset),key=iso(d);
   document.getElementById('rep-date').textContent=fmtLong(d);
-  document.getElementById('rep-sub').textContent=repOffset===0?'Nächster Mittwoch':'';
+  document.getElementById('rep-sub').textContent=repOffset===0?'Aktueller Mittwoch':'';
   load(true);let pRows=[],rRows=[];
   try{[pRows,rRows]=await Promise.all([sb('training_planung').get(`datum=eq.${key}`),sb('training_berichte').get(`datum=eq.${key}`)]);}
   catch(e){}load(false);
