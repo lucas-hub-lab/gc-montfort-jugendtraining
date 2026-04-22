@@ -595,8 +595,8 @@ async function renderPlan(){
   const d=wed(planOffset),key=iso(d);
   const today=new Date();today.setHours(0,0,0,0);
   const isPast=d<today;
+  const isToday=d.toDateString()===new Date().toDateString();
   document.getElementById('plan-date').textContent=fmtLong(d);
-  const today=new Date();const isToday=wed(0).toDateString()===today.toDateString();
   document.getElementById('plan-sub').textContent=planOffset===0?(isToday?'Heutiges Training':'Aktueller Mittwoch'):(isPast?'Vergangenes Training':'');
   load(true);
   let repData={};
@@ -626,52 +626,54 @@ async function renderPlan(){
       const selDisabled=ab||isPast;
       const selStyle=isPast?'pointer-events:none;':'';
 
-      card.innerHTML=`
-        <div class="gc-head">
-          <div class="gc-left">
-            <div class="gc-badge badge-${gid}">${gid}</div>
-            <div><div class="gc-name">Gruppe ${gid} — ${GNAME[gid]}</div><div class="gc-time">${g.time} Uhr</div></div>
-          </div>
-          ${isPast?'<span style="font-size:11px;color:var(--muted);background:var(--bg);padding:3px 8px;border-radius:100px;border:1px solid var(--border);">Vergangen</span>':''}
-        </div>
-        <div class="slot-row"><span class="slot-label">Trainer 1</span>
-          <select class="t-select${t1?' filled':''}" id="s${gid}1" style="${selStyle}"${selDisabled?' disabled':''}>${trOpts(t1)}</select>
-        </div>
-        <div class="slot-row"><span class="slot-label">Trainer 2</span>
-          <select class="t-select${t2?' filled':''}" id="s${gid}2" style="${selStyle}"${selDisabled?' disabled':''}>
-            <option value="">— optional —</option>${trainers.map(t=>`<option value="${t.name}"${t.name===t2?' selected':''}>${t.name}</option>`).join('')}
-          </select>
-        </div>
-        ${!isPast?`
-        <div class="abgesagt-row">
-          <label><input type="checkbox" id="chk${gid}"${ab?' checked':''} onchange="toggleAbgesagt('${gid}',this)"><span style="color:${ab?'var(--red)':'var(--muted)'}">Training fällt aus</span></label>
-        </div>
-        <button class="vorschlag-btn" id="vbtn${gid}" onclick="toggleVorschlag('${gid}')">
-          <span>✦ Trainingsvorschlag</span><span class="vb-icon">▼</span>
-        </button>
-        <div class="vorschlag-body" id="vacc${gid}"></div>
-        `:`
-        <button class="bericht-btn" id="bbtn${gid}" onclick="toggleBericht('${gid}','${key}')">
-          <span>📋 Trainingsbericht</span><span class="vb-icon">▼</span>
-        </button>
-        <div class="bericht-body" id="bacc${gid}" data-bericht="${rep?.bericht?encodeURIComponent(rep.bericht):''}"></div>
-        `}
-      `;
+      // Build card HTML without nested backticks
+      const vergBadge=isPast?'<span style="font-size:11px;color:var(--muted);background:var(--bg);padding:3px 8px;border-radius:100px;border:1px solid var(--border);">Vergangen</span>':'';
+      const trainerOpts2='<option value="">— optional —</option>'+trainers.map(t=>'<option value="'+t.name+'"'+(t.name===t2?' selected':'')+'>'+t.name+'</option>').join('');
+      const encBericht=(rep&&rep.bericht)?encodeURIComponent(rep.bericht):'';
+      let bottomBlock;
+      if(isPast){
+        bottomBlock='<button class="bericht-btn" id="bbtn'+gid+'" onclick="toggleBericht(this,'+JSON.stringify(key)+')">'
+          +'<span>📋 Trainingsbericht</span><span class="vb-icon">▼</span></button>'
+          +'<div class="bericht-body" id="bacc'+gid+'" data-bericht="'+encBericht+'"></div>';
+      }else{
+        bottomBlock='<div class="abgesagt-row"><label>'
+          +'<input type="checkbox" id="chk'+gid+'"'+(ab?' checked':'')+' onchange="toggleAbgesagt(this)">'
+          +'<span style="color:'+(ab?'var(--red)':'var(--muted)')+'">Training fällt aus</span>'
+          +'</label></div>'
+          +'<button class="vorschlag-btn" id="vbtn'+gid+'" onclick="toggleVorschlag(this)">'
+          +'<span>✦ Trainingsvorschlag</span><span class="vb-icon">▼</span></button>'
+          +'<div class="vorschlag-body" id="vacc'+gid+'"></div>';
+      }
+
+      card.innerHTML=
+        '<div class="gc-head"><div class="gc-left">'
+        +'<div class="gc-badge badge-'+gid+'">'+gid+'</div>'
+        +'<div><div class="gc-name">Gruppe '+gid+' — '+GNAME[gid]+'</div><div class="gc-time">'+g.time+' Uhr</div></div>'
+        +'</div>'+vergBadge+'</div>'
+        +'<div class="slot-row"><span class="slot-label">Trainer 1</span>'
+        +'<select class="t-select'+(t1?' filled':'')+'" id="s'+gid+'1"'+(selDisabled?' disabled':'')+'>'+trOpts(t1)+'</select>'
+        +'</div>'
+        +'<div class="slot-row"><span class="slot-label">Trainer 2</span>'
+        +'<select class="t-select'+(t2?' filled':'')+'" id="s'+gid+'2"'+(selDisabled?' disabled':'')+'>'+trainerOpts2+'</select>'
+        +'</div>'
+        +bottomBlock;
+
       cont.appendChild(card);
     });
   });
 }
 
-function toggleAbgesagt(gid,cb){
+function toggleAbgesagt(cb){
   const card=cb.closest('.group-card');
   card.classList.toggle('abgesagt',cb.checked);
   cb.nextElementSibling.style.color=cb.checked?'var(--red)':'var(--muted)';
-  ['s'+gid+'1','s'+gid+'2'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=cb.checked;});
+  card.querySelectorAll('select').forEach(s=>s.disabled=cb.checked);
 }
 
-function toggleBericht(gid, key){
-  const acc=document.getElementById('bacc'+gid);
-  const btn=document.getElementById('bbtn'+gid);
+function toggleBericht(btn,key){
+  const card=btn.closest('.group-card');
+  const acc=card.querySelector('.bericht-body');
+  const gid=card.querySelector('.gc-badge').textContent.trim();
   const wasOpen=acc.classList.contains('open');
   document.querySelectorAll('.bericht-body').forEach(a=>a.classList.remove('open'));
   document.querySelectorAll('.bericht-btn').forEach(b=>b.classList.remove('open'));
@@ -679,17 +681,14 @@ function toggleBericht(gid, key){
     acc.classList.add('open');btn.classList.add('open');
     const encoded=acc.dataset.bericht;
     const bericht=encoded?decodeURIComponent(encoded):'';
+    const safe=bericht.replace(/&/g,'&amp;').replace(/</g,'&lt;');
     if(bericht){
-      acc.innerHTML=`
-        <div class="bericht-content">
-          <div class="bericht-text">${bericht.replace(/</g,'&lt;')}</div>
-          <div class="bericht-meta">Eintrag vorhanden</div>
-        </div>
-        <button class="bericht-edit-btn" onclick="goToBericht('${gid}')">✏️ Bericht bearbeiten</button>`;
+      acc.innerHTML='<div class="bericht-content"><div class="bericht-text">'+safe+'</div>'
+        +'<div class="bericht-meta">Eintrag vorhanden</div></div>'
+        +'<button class="bericht-edit-btn" onclick="goToBericht('+JSON.stringify(gid)+')">✏️ Bericht bearbeiten</button>';
     }else{
-      acc.innerHTML=`
-        <div class="bericht-empty">Noch kein Bericht eingetragen</div>
-        <button class="bericht-edit-btn" onclick="goToBericht('${gid}')">✏️ Bericht jetzt eintragen</button>`;
+      acc.innerHTML='<div class="bericht-empty">Noch kein Bericht eingetragen</div>'
+        +'<button class="bericht-edit-btn" onclick="goToBericht('+JSON.stringify(gid)+')">✏️ Bericht jetzt eintragen</button>';
     }
     setTimeout(()=>acc.scrollIntoView({behavior:'smooth',block:'nearest'}),60);
   }
@@ -748,26 +747,27 @@ const VORSCHLAEGE={
   ]
 };
 
-function toggleVorschlag(gid){
+function toggleVorschlag(btn){
+  const card=btn.closest('.group-card');
+  const acc=card.querySelector('.vorschlag-body');
+  const gid=card.querySelector('.gc-badge').textContent.trim();
   curVG=gid;
-  const acc=document.getElementById('vacc'+gid);
-  const btn=document.getElementById('vbtn'+gid);
   const wasOpen=acc.classList.contains('open');
-  // Close all
   document.querySelectorAll('.vorschlag-body').forEach(a=>a.classList.remove('open'));
   document.querySelectorAll('.vorschlag-btn').forEach(b=>b.classList.remove('open'));
   if(!wasOpen){
     acc.classList.add('open');btn.classList.add('open');
     const weekN=Math.floor((new Date()-new Date(2026,3,15))/(7*864e5));
     if(curVI[gid]===undefined)curVI[gid]=weekN%3;
-    renderVorschlag(gid);
+    renderVorschlag(gid,acc);
     setTimeout(()=>acc.scrollIntoView({behavior:'smooth',block:'nearest'}),60);
   }
 }
 
-function renderVorschlag(gid){
+function renderVorschlag(gid,acc){
+  if(!acc)acc=document.querySelector('.vorschlag-body.open');
+  if(!acc)return;
   const idx=curVI[gid]||0;const total=VORSCHLAEGE[gid].length;const p=VORSCHLAEGE[gid][idx];
-  const acc=document.getElementById('vacc'+gid);
   acc.innerHTML=`
     <div class="va-nav">
       <button class="va-nav-btn" onclick="stepV(-1)">‹</button>
