@@ -6,6 +6,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="GC Montfort">
+<meta name="application-name" content="GC Montfort">
+<meta name="theme-color" content="#2D5016">
+<meta name="msapplication-TileColor" content="#2D5016">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <title>GC Montfort — Jugendtraining</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -1092,6 +1098,53 @@ async function removeTrainer(id,name){
 (async()=>{
   load(true);await loadTrainers();load(false);renderPlan();
 })();
+</script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('sw.js').then(r=>{
+      console.log('SW registered');
+    }).catch(e=>console.log('SW error',e));
+  });
+}
+
+// iOS install prompt hint
+window.addEventListener('load',()=>{
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isStandalone=window.navigator.standalone;
+  const shown=localStorage.getItem('install-hint');
+  if(isIOS && !isStandalone && !shown){
+    setTimeout(()=>{
+      const banner=document.createElement('div');
+      banner.style.cssText='position:fixed;bottom:80px;left:12px;right:12px;background:#2D5016;color:#fff;border-radius:14px;padding:14px 16px;font-size:13px;font-family:DM Sans,sans-serif;z-index:999;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,0.25);';
+      banner.innerHTML='<span style="font-size:24px;">⛳</span><div><div style="font-weight:600;margin-bottom:2px;">Als App installieren</div><div style="opacity:.8;font-size:12px;">Tippe auf <b>Teilen</b> → <b>Zum Home-Bildschirm</b></div></div><button onclick="this.closest('div').remove();localStorage.setItem('install-hint',1)" style="margin-left:auto;background:rgba(255,255,255,.2);border:none;color:#fff;border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;">✕</button>';
+      document.body.appendChild(banner);
+    },3000);
+  }
+});
+
+// Android/Chrome install prompt
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt',(e)=>{
+  e.preventDefault();
+  deferredPrompt=e;
+  const shown=localStorage.getItem('install-hint');
+  if(!shown){
+    setTimeout(()=>{
+      const banner=document.createElement('div');
+      banner.style.cssText='position:fixed;bottom:80px;left:12px;right:12px;background:#2D5016;color:#fff;border-radius:14px;padding:14px 16px;font-size:13px;font-family:DM Sans,sans-serif;z-index:999;display:flex;align-items:center;gap:12px;box-shadow:0 4px 20px rgba(0,0,0,0.25);';
+      banner.innerHTML='<span style="font-size:24px;">⛳</span><div><div style="font-weight:600;margin-bottom:2px;">Als App installieren</div><div style="opacity:.8;font-size:12px;">Direkt auf dem Homescreen öffnen</div></div><button id="install-yes" style="margin-left:auto;background:#fff;border:none;color:#2D5016;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;">Installieren</button>';
+      document.body.appendChild(banner);
+      document.getElementById('install-yes').onclick=async()=>{
+        banner.remove();
+        deferredPrompt.prompt();
+        const{outcome}=await deferredPrompt.userChoice;
+        localStorage.setItem('install-hint',1);
+        deferredPrompt=null;
+      };
+    },3000);
+  }
+});
 </script>
 </body>
 </html>
