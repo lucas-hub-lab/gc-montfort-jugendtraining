@@ -638,9 +638,9 @@ async function renderPlan(){
       const encBericht=(rep&&rep.bericht)?encodeURIComponent(rep.bericht):'';
       let bottomBlock;
       if(isPast){
-        bottomBlock='<button class="bericht-btn" id="bbtn'+gid+'" onclick="toggleBericht(this,'+JSON.stringify(key)+')">'
+        bottomBlock='<button class="bericht-btn" id="bbtn'+gid+'" data-gid="'+gid+'" data-key="'+key+'" onclick="toggleBericht(this)">'
           +'<span>📋 Trainingsbericht</span><span class="vb-icon">▼</span></button>'
-          +'<div class="bericht-body" id="bacc'+gid+'" data-bericht="'+encBericht+'"></div>';
+          +'<div class="bericht-body" id="bacc'+gid+'"></div>';
       }else{
         bottomBlock='<div class="abgesagt-row"><label>'
           +'<input type="checkbox" id="chk'+gid+'"'+(ab?' checked':'')+' onchange="toggleAbgesagt(this)">'
@@ -676,27 +676,32 @@ function toggleAbgesagt(cb){
   card.querySelectorAll('select').forEach(s=>s.disabled=cb.checked);
 }
 
-function toggleBericht(btn,key){
-  const card=btn.closest('.group-card');
-  const acc=card.querySelector('.bericht-body');
-  const gid=card.querySelector('.gc-badge').textContent.trim();
+async function toggleBericht(btn){
+  const gid=btn.dataset.gid;
+  const key=btn.dataset.key;
+  const acc=document.getElementById('bacc'+gid);
   const wasOpen=acc.classList.contains('open');
   document.querySelectorAll('.bericht-body').forEach(a=>a.classList.remove('open'));
   document.querySelectorAll('.bericht-btn').forEach(b=>b.classList.remove('open'));
   if(!wasOpen){
     acc.classList.add('open');btn.classList.add('open');
-    const encoded=acc.dataset.bericht;
-    const bericht=encoded?decodeURIComponent(encoded):'';
-    const safe=bericht.replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    acc.innerHTML='<div class="bericht-empty" style="display:flex;align-items:center;gap:8px;"><div class="spinner" style="width:16px;height:16px;border-width:2px;"></div>Wird geladen…</div>';
+    setTimeout(()=>acc.scrollIntoView({behavior:'smooth',block:'nearest'}),60);
+    // Always fetch fresh from Supabase
+    let bericht='';
+    try{
+      const rows=await sb('training_berichte').get('datum=eq.'+key+'&gruppe=eq.'+gid);
+      if(rows.length>0) bericht=rows[0].bericht||'';
+    }catch(e){console.error(e);}
+    const safe=bericht.replace(/&/g,'&amp;').replace(/</g,'&lt;').split('\n').join('<br>');
     if(bericht){
       acc.innerHTML='<div class="bericht-content"><div class="bericht-text">'+safe+'</div>'
-        +'<div class="bericht-meta">Eintrag vorhanden</div></div>'
+        +'<div class="bericht-meta">✓ Bericht vorhanden</div></div>'
         +'<button class="bericht-edit-btn" onclick="goToBericht('+JSON.stringify(gid)+')">✏️ Bericht bearbeiten</button>';
     }else{
       acc.innerHTML='<div class="bericht-empty">Noch kein Bericht eingetragen</div>'
-        +'<button class="bericht-edit-btn" onclick="goToBericht('+JSON.stringify(gid)+')">✏️ Bericht jetzt eintragen</button>';
+        +'<button class="bericht-edit-btn" onclick="goToBericht('+JSON.stringify(gid)+')">✏️ Jetzt eintragen</button>';
     }
-    setTimeout(()=>acc.scrollIntoView({behavior:'smooth',block:'nearest'}),60);
   }
 }
 
