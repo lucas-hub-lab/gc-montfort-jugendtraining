@@ -1,4 +1,4 @@
-const CACHE = 'gcm-v1';
+const CACHE = 'gcm-v2';
 const ASSETS = [
   '/gc-montfort-jugendtraining/',
   '/gc-montfort-jugendtraining/index.html',
