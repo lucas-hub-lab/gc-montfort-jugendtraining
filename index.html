@@ -564,7 +564,7 @@ function fmtDE(d){return d.toLocaleDateString('de-AT',{weekday:'short',day:'2-di
 function fmtLong(d){return d.toLocaleDateString('de-AT',{weekday:'long',day:'2-digit',month:'long',year:'numeric'});}
 
 function wedgesUntilOct(){
-  const dates=[],d=wed(0),end=new Date(2026,9,31);
+  const dates=[],d=wed(0),end=new Date(2027,9,31);
   while(d<=end){dates.push(new Date(d));d.setDate(d.getDate()+7);}
   return dates;
 }
